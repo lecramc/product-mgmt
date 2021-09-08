@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package orders;
 
-option go_package = "./;orders";
+option go_package = "example.com/orders-management;orders_management";
 
 service OrderManagement {
     rpc  CreateNewOrder (NewOrder) returns (Order) {
