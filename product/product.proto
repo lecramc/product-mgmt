@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package product;
+
+option go_package = "example.com/product-management;product_management";
+
+service ProductManagement {
+    rpc  CreateNewProduct (NewProduct) returns (Product) {}
+    rpc GetProducts (GetProductsParams) returns (ProductsList) {}
+}
+    message NewProduct {
+        string ref = 1;
+        string label = 2;
+    }
+
+    message Product {
+        int32 id = 1;
+        string ref = 2;
+        string label = 3; 
+    }
+
+    message GetProductsParams {
+
+    }
+
+    message ProductsList {
+        repeated Product products = 1;
+    }
