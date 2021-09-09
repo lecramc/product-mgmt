@@ -17,8 +17,8 @@ const (
 func Menu() int32 {
 	var user_choice int32
 	var opt []string
-	opt = append(opt, "Lister les produits", "Ajouter un produit", "Afficher un produit", "Supprimer un produit")
-	fmt.Printf("Que souhaitez vous faire ?\n")
+	opt = append(opt, "Lister les produits", "Ajouter un produit", "Afficher un produit", "Supprimer un produit", "Quitter")
+	fmt.Printf("\nQue souhaitez vous faire ?\n")
 	for i, value := range opt {
 		fmt.Printf("%d - %s ?\n", i+1, value)
 	}
@@ -64,54 +64,61 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
 	defer cancel()
-
-	user_action := Menu()
-	switch user_action {
-	case 2:
-		new_products := make(map[string]string)
-
-		new_products = AddProduct()
-		for ref, label := range new_products {
-			r, err := c.CreateNewProduct(ctx, &pb.NewProduct{Ref: ref, Label: label})
+	bool_user := true
+	for bool_user {
+		user_action := Menu()
+		switch user_action {
+		case 1:
+			params := &pb.GetProductsParams{}
+			r, err := c.GetProducts(ctx, params)
 			if err != nil {
 				log.Fatalf("could not create product: %v", err)
 			}
-			log.Printf(`Product Details:
+
+			fmt.Printf("PRODUCT LIST: %v\n", r.GetProducts())
+		case 2:
+			new_products := make(map[string]string)
+
+			new_products = AddProduct()
+			for ref, label := range new_products {
+				r, err := c.CreateNewProduct(ctx, &pb.NewProduct{Ref: ref, Label: label})
+				if err != nil {
+					log.Fatalf("could not create product: %v", err)
+				}
+				log.Printf(`Product Details:
+					ID: %d
+					REF: %s
+					LABEL: %s`, r.GetId(), r.GetRef(), r.GetLabel())
+			}
+
+		case 3:
+			var id int32
+			fmt.Printf("Saisir l'identifiant de produit à afficher : ")
+			fmt.Scan(&id)
+
+			r, err := c.GetOneProduct(ctx, &pb.Product{Id: id})
+			if err != nil {
+				log.Fatalf("could not print product: %v", err)
+			}
+			fmt.Printf(`
 			ID: %d
 			REF: %s
 			LABEL: %s`, r.GetId(), r.GetRef(), r.GetLabel())
-		}
+		case 4:
+			var id int32
+			fmt.Printf("Saisir l'identifiant de produit à supprimer : ")
+			fmt.Scan(&id)
 
-	case 3:
-		var id int32
-		fmt.Printf("Saisir l'identifiant de produit à afficher : ")
-		fmt.Scan(&id)
-
-		r, err := c.GetOneProduct(ctx, &pb.Product{Id: id})
-		if err != nil {
-			log.Fatalf("could not print product: %v", err)
+			r, err := c.DeleteProduct(ctx, &pb.Product{Id: id})
+			if err != nil {
+				log.Fatalf("could not remove product: %v", err)
+			}
+			fmt.Printf(`Le produit avec l'identifiant %d a bien été supprimé`, r.GetId())
+		case 5:
+			bool_user = false
+		default:
+			fmt.Printf("Votre saisie est incorrect")
 		}
-		fmt.Printf(`
-			ID: %d
-			REF: %s
-			LABEL: %s`, r.GetId(), r.GetRef(), r.GetLabel())
-	case 4:
-		var id int32
-		fmt.Printf("Saisir l'identifiant de produit à supprimer : ")
-		fmt.Scan(&id)
-
-		r, err := c.DeleteProduct(ctx, &pb.Product{Id: id})
-		if err != nil {
-			log.Fatalf("could not remove product: %v", err)
-		}
-		fmt.Printf(`Le produit avec l'identifiant %d a bien été supprimé`, r.GetId())
-	default:
-		params := &pb.GetProductsParams{}
-		r, err := c.GetProducts(ctx, params)
-		if err != nil {
-			log.Fatalf("could not create product: %v", err)
-		}
-		fmt.Printf("PRODUCT LIST: %v\n", r.GetProducts())
 	}
 
 }
