@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	port = ":50051"
+	port       = ":50051"
+	address_db = "172.17.0.1"
 )
 
 func NewProductManagementServer() *ProductManagementServer {
@@ -113,7 +114,7 @@ func (server *ProductManagementServer) DeleteProduct(ctx context.Context, in *pb
 	return product, nil
 }
 func main() {
-	database_url := "postgres://admin:password@172.17.0.1:5432/database"
+	database_url := "postgres://admin:password@" + address_db + ":5432/database"
 	conn, err := pgx.Connect(context.Background(), database_url)
 	if err != nil {
 		log.Fatalf("Unable to establish connection: %v", err)
