@@ -85,6 +85,33 @@ func (server *ProductManagementServer) GetProducts(ctx context.Context, in *pb.G
 	}
 	return products_list, nil
 }
+
+func (server *ProductManagementServer) GetOneProduct(ctx context.Context, in *pb.Product) (*pb.Product, error) {
+	product := &pb.Product{Id: in.GetId(), Ref: in.GetRef(), Label: in.GetLabel()}
+
+	err := server.conn.QueryRow(context.Background(), "SELECT * FROM product WHERE id=$1", product.Id).Scan(&product.Id, &product.Ref, &product.Label)
+	log.Printf(product.Label)
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
+}
+
+func (server *ProductManagementServer) DeleteProduct(ctx context.Context, in *pb.Product) (*pb.Product, error) {
+
+	product := &pb.Product{Id: in.GetId(), Ref: in.GetRef(), Label: in.GetLabel()}
+	tx, err := server.conn.Begin(context.Background())
+	if err != nil {
+		log.Fatalf("conn.Begin failed %v", err)
+	}
+	_, err = tx.Exec(context.Background(), "DELETE FROM product WHERE id=$1", product.Id)
+	if err != nil {
+		log.Fatalf("tx.Exec failed: %v", err)
+	}
+
+	tx.Commit(context.Background())
+	return product, nil
+}
 func main() {
 	database_url := "postgres://admin:password@172.17.0.1:5432/database"
 	conn, err := pgx.Connect(context.Background(), database_url)
